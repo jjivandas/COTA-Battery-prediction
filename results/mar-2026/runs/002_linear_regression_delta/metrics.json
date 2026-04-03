@@ -1,0 +1,14 @@
+{
+  "cv_RMSE": 0.014195,
+  "cv_MAE": 0.008737,
+  "cv_R2": 0.950329,
+  "cv_MAPE": 6.780321,
+  "holdout_RMSE": 0.010707,
+  "holdout_MAE": 0.007593,
+  "holdout_R2": 0.971612,
+  "holdout_MAPE": 6.091505,
+  "temporal_RMSE": 0.016154,
+  "temporal_MAE": 0.013273,
+  "temporal_R2": -4.529536,
+  "temporal_MAPE": 16.747419
+}
