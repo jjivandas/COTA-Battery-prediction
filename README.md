@@ -26,7 +26,7 @@ results/<dataset>/
 ## Data Pipeline
 
 ```
-Raw CSVs (12 buses) → data_processing.py → master_dataset.csv → feature_engineering.py → feature_matrix.csv
+Raw CSVs (12 buses) → data_processing.py (+ optional noise injection) → master_dataset.csv → feature_engineering.py → feature_matrix.csv
 ```
 
 ### Step 1: Data Processing (`python -m src.data_processing`)
@@ -36,7 +36,24 @@ Raw CSVs (12 buses) → data_processing.py → master_dataset.csv → feature_en
 - Parses dates (`%d-%b-%Y`), adds integer `bus_id` (1–12)
 - Flags no-service weeks (`is_service_week`) where distance = 0
 - Forward-fills cumulative columns within each bus group
+- Optionally injects column-specific measurement noise into weekly inputs, then recomputes cumulative totals
 - Outputs: `data/processed/<dataset>/master_dataset.csv`
+
+### Optional Noise Injection
+
+Noise is configured in `src/config.py` and applied inside `src.data_processing` after cleaning and service-week flagging:
+
+- Weekly measurements can be perturbed with additive or relative Gaussian noise
+- Weekly time components are renormalized so driving + charging + parking stays constant for each week
+- Cumulative totals are rebuilt from the noised weekly values
+- Targets (`avg_qloss`, `avg_qloss_cycling`, `avg_qloss_calendar`) are left clean by default
+
+The pipeline now supports parallel dataset variants through environment variables:
+
+- `BASE_DATASET=mar-2026 DATASET_VARIANT=clean` → clean baseline
+- `BASE_DATASET=mar-2026 DATASET_VARIANT=noisy-v1` → noisy variant with separate processed/results outputs
+
+When the noisy variant is active, the profile is also written to `data/processed/<dataset>/noise_config.json`.
 
 ### Step 2: Feature Engineering (`python -m src.feature_engineering`)
 
@@ -73,14 +90,33 @@ Outputs: `data/processed/<dataset>/feature_matrix.csv`
 When new data arrives:
 
 1. Place it under `data/raw/<new-name>/per-bus-csvs/` (same Bus-Id-001..012 structure)
-2. Edit `ACTIVE_DATASET` in `src/config.py`
+2. Run the pipeline with `BASE_DATASET=<new-name>`
 3. Re-run the pipeline:
    ```bash
-   python -m src.data_processing
-   python -m src.feature_engineering
-   python -m src.modeling
+   BASE_DATASET=<new-name> DATASET_VARIANT=clean python -m src.data_processing
+   BASE_DATASET=<new-name> DATASET_VARIANT=clean python -m src.feature_engineering
+   BASE_DATASET=<new-name> DATASET_VARIANT=clean python -m src.modeling
    ```
    All outputs go to `data/processed/<new-name>/` and `results/<new-name>/` — previous results are untouched.
+
+## Running Clean And Noisy Tracks
+
+Clean baseline:
+
+```bash
+BASE_DATASET=mar-2026 DATASET_VARIANT=clean python -m src.data_processing
+BASE_DATASET=mar-2026 DATASET_VARIANT=clean python -m src.feature_engineering
+BASE_DATASET=mar-2026 DATASET_VARIANT=clean python -m src.modeling
+```
+
+Noisy variant:
+
+```bash
+BASE_DATASET=mar-2026 DATASET_VARIANT=noisy-v1 python -m src.data_processing
+BASE_DATASET=mar-2026 DATASET_VARIANT=noisy-v1 python -m src.feature_engineering
+BASE_DATASET=mar-2026 DATASET_VARIANT=noisy-v1 python -m src.modeling
+BASE_DATASET=mar-2026 DATASET_VARIANT=noisy-v1 python -m src.comparison
+```
 
 ## Current Dataset: mar-2026
 

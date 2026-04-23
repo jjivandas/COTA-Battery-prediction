@@ -19,7 +19,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GroupKFold
 
 from src.config import (
-    FEATURE_MATRIX_PATH, RESULTS_DIR, ACTIVE_DATASET,
+    ACTIVE_DATASET, BASE_DATASET, DATASET_VARIANT, FEATURE_MATRIX_PATH,
+    NOISE_ENABLED, RESULTS_DIR,
     TARGET_CUMULATIVE, TARGET_DELTA, CUMULATIVE_COLS, WEEKLY_COLS,
 )
 from src.evaluation import (
@@ -179,6 +180,9 @@ def execute_run(model_name: str, target_type: str, df: pd.DataFrame = None):
         "target_type": target_type,
         "target_column": target_col,
         "dataset": ACTIVE_DATASET,
+        "base_dataset": BASE_DATASET,
+        "dataset_variant": DATASET_VARIANT,
+        "noise_enabled": NOISE_ENABLED,
         "features": feature_cols,
         "n_features": len(feature_cols),
         "n_samples": int(X.shape[0]),

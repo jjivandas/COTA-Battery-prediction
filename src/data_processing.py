@@ -1,11 +1,13 @@
 """Load, clean, and merge the per-bus CSV data."""
 
+import json
 import pandas as pd
-import numpy as np
 from src.config import (
-    BUS_IDS, get_csv_path, COLUMN_RENAME, DATE_COLUMNS, DATE_FORMAT,
-    CUMULATIVE_COLS, PROCESSED_DIR, MASTER_DATASET_PATH,
+    ACTIVE_DATASET, BASE_DATASET, BUS_IDS, get_csv_path, COLUMN_RENAME,
+    DATASET_METADATA_PATH, DATE_COLUMNS, DATE_FORMAT, CUMULATIVE_COLS,
+    NOISE_METADATA_PATH, PROCESSED_DIR, MASTER_DATASET_PATH,
 )
+from src.noise import apply_noise_profile, get_noise_metadata
 
 
 def load_single_bus(bus_id: str) -> pd.DataFrame:
@@ -60,8 +62,26 @@ def build_master_dataset() -> pd.DataFrame:
     print("Handling missing values...")
     df = handle_missing_values(df)
 
-    # Save
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    with open(DATASET_METADATA_PATH, "w") as f:
+        json.dump(
+            {
+                "base_dataset": BASE_DATASET,
+                "active_dataset": ACTIVE_DATASET,
+                "noise_enabled": get_noise_metadata()["enabled"],
+            },
+            f,
+            indent=2,
+        )
+
+    noise_meta = get_noise_metadata()
+    if noise_meta["enabled"]:
+        print(f"Applying noise profile: {noise_meta['profile_name']}")
+        df = apply_noise_profile(df)
+        with open(NOISE_METADATA_PATH, "w") as f:
+            json.dump(noise_meta, f, indent=2)
+
+    # Save
     df.to_csv(MASTER_DATASET_PATH, index=False)
     print(f"\nSaved master dataset to {MASTER_DATASET_PATH}")
 
