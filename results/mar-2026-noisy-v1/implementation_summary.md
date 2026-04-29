@@ -20,7 +20,7 @@
 - Best temporal result on the noisy dataset: `random_forest` / `delta` with temporal R2 `-0.6941`.
 - Change from clean baseline for that run: `-0.2125` R2.
 
-## How to explain this in slides
+## Points for SLides
 
 - We created a messier version of the same experiment to mimic measurement uncertainty.
 - We did not change the models or scoring rules, so the comparison is fair.
